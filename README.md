@@ -1,7 +1,5 @@
-# openai-discord-bot
-simple discord bot that responds to messages using openai's responses api and chat completions api.<br>
-check the
-[api docs](https://platform.openai.com/docs/api-reference) for latest info.
+# discord-llm-bot
+simple discord bot that responds to messages using llm apis
 
 ## usage
 #### slash command
@@ -10,7 +8,7 @@ check the
 
 #### shorthand command
 `%[prompt]`<br>
-use the default model gpt-4o
+talk to the default model gemini-2.5-pro
 
 ## setup and run
 - create a venv and install requirements
@@ -26,6 +24,7 @@ use the default model gpt-4o
 
 ## .env
 ```
-DISCORD_KEY="123456"
-OPENAI_API_KEY="654321"
+DISCORD_KEY="42069"
+GOOGLE_GEMINI_KEY="123456"
+OPENAI_KEY="654321"
 ```
