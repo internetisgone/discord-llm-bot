@@ -4,6 +4,7 @@ import discord
 from discord import app_commands
 from dotenv import load_dotenv
 from litellm import completion
+from litellm import text_completion
 
 load_dotenv()
 os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_GEMINI_KEY")
@@ -13,7 +14,6 @@ SLASH_COMMAND_NAME = "kkb"
 SHORTHAND_COMMAND_PREFIX = "%"
 CHAR_LIMIT_DISCORD = 2000         # max chars in a discord message
 
-
 # DISCORD_KEY = os.getenv("DISCORD_TEST_KEY")
 # PROXY = "socks5://127.0.0.1:1087"
 
@@ -21,7 +21,7 @@ DISCORD_KEY = os.getenv("DISCORD_KEY")
 PROXY = None
 
 models = [
-    "gemini/gemini-3-pro-preview",
+    # "gemini/gemini-3-pro-preview",
     "gemini/gemini-2.5-pro",
     "gemini/gemini-2.5-flash",
     "gemini/gemini-2.0-flash",
@@ -35,29 +35,41 @@ models = [
     "openai/davinci-002",
 ]
 
-DEFAULT_MODEL = models[1]
+DEFAULT_MODEL = models[0]
 
 logging.basicConfig(level = logging.INFO, format = "%(asctime)s %(levelname)s %(process)d %(message)s")
 
 async def get_response(model, prompt, img_url, web_search, temperature):
     try:
-        response = completion(
-            model = model,
-            messages=[
-                {
-                    "role": "user", 
-                    "content": [
-                        { "type": "text", "text": prompt },
-                        *( [{ "type": "image_url", "image_url": img_url }] if img_url else {} ) 
-                    ]
-                }
-            ],
-            web_search_options = { "search_context_size": "medium" } if web_search and "openai" in model else {},
-            tools = [{"urlContext": {}}] if web_search and "gemini" in model else []
-#           temperature = temperature,
-#           max_tokens = 1000
-        ) 
-        return response.choices[0].message.content
+        response = None
+
+        if model == models[-1]:   # legacy completion model davinci-002
+            response = text_completion(
+                model = model,
+                prompt = prompt,
+                temperature = temperature,
+                max_tokens = 1000
+            )
+            return response.choices[0].text
+        
+        else:  
+            response = completion(
+                model = model,
+                messages=[
+                    {
+                        "role": "user", 
+                        "content": [
+                            { "type": "text", "text": prompt },
+                            *( [{ "type": "image_url", "image_url": img_url }] if img_url else {} ) 
+                        ]
+                    }
+                ],
+                web_search_options = { "search_context_size": "medium" } if web_search and "openai" in model else {},
+                tools = [{"urlContext": {}}] if web_search and "gemini" in model else []
+    #           temperature = temperature,
+    #           max_tokens = 1000
+            ) 
+            return response.choices[0].message.content
     
     except Exception as e:
         logging.error(str(e))
@@ -105,16 +117,16 @@ def run_discord_bot():
     # slash command  
     @tree.command(name = SLASH_COMMAND_NAME) 
     @app_commands.choices(model = [
-        app_commands.Choice(name = "gemini/gemini-3-pro-preview", value = 0),
-        app_commands.Choice(name = "gemini/gemini-2.5-pro", value = 1),
-        app_commands.Choice(name = "gemini/gemini-2.5-flash", value = 2),
-        app_commands.Choice(name = "gemini/gemini-2.0-flash", value = 3),
-        app_commands.Choice(name = "openai/gpt-5.1", value = 4),
-        app_commands.Choice(name = "openai/gpt-5", value = 5),
-        app_commands.Choice(name = "openai/gpt-5-mini", value = 6),
-        app_commands.Choice(name = "openai/gpt-4.1", value = 7),
-        app_commands.Choice(name = "openai/gpt-4o", value = 8),
-        app_commands.Choice(name = "openai/davinci-002", value = 9)
+        # app_commands.Choice(name = "gemini/gemini-3-pro-preview", value = 0),
+        app_commands.Choice(name = "gemini/gemini-2.5-pro", value = 0),
+        app_commands.Choice(name = "gemini/gemini-2.5-flash", value = 1),
+        app_commands.Choice(name = "gemini/gemini-2.0-flash", value = 2),
+        app_commands.Choice(name = "openai/gpt-5.1", value = 3),
+        app_commands.Choice(name = "openai/gpt-5", value = 4),
+        app_commands.Choice(name = "openai/gpt-5-mini", value = 5),
+        app_commands.Choice(name = "openai/gpt-4.1", value = 6),
+        app_commands.Choice(name = "openai/gpt-4o", value = 7),
+        app_commands.Choice(name = "openai/davinci-002", value = 8)
     ])
     async def on_command(
         interaction: discord.Interaction,
