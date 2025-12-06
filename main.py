@@ -5,6 +5,7 @@ from discord import app_commands
 from dotenv import load_dotenv
 from litellm import completion
 from litellm import text_completion
+from litellm import OpenAIWebSearchOptions
 
 load_dotenv()
 os.environ["GEMINI_API_KEY"] = os.getenv("GOOGLE_GEMINI_KEY")
@@ -30,7 +31,6 @@ models = [
     "openai/gpt-5",   
     "openai/gpt-5-mini",
     "openai/gpt-4.1",
-    "openai/gpt-4o",
 
     "openai/davinci-002",
 ]
@@ -56,6 +56,7 @@ async def get_response(model, prompt, img_url, web_search, temperature):
             response = completion(
                 model = model,
                 messages=[
+                    { "role": "developer", "content": "Be concise." },
                     {
                         "role": "user", 
                         "content": [
@@ -64,10 +65,8 @@ async def get_response(model, prompt, img_url, web_search, temperature):
                         ]
                     }
                 ],
-                web_search_options = { "search_context_size": "medium" } if web_search and "openai" in model else {},
-                tools = [{"urlContext": {}}] if web_search and "gemini" in model else []
-    #           temperature = temperature,
-    #           max_tokens = 1000
+                # tools=[{ "type": "web_search_preview" }] if web_search else [],
+                # max_tokens = 1000
             ) 
             return response.choices[0].message.content
     
@@ -125,8 +124,7 @@ def run_discord_bot():
         app_commands.Choice(name = "openai/gpt-5", value = 4),
         app_commands.Choice(name = "openai/gpt-5-mini", value = 5),
         app_commands.Choice(name = "openai/gpt-4.1", value = 6),
-        app_commands.Choice(name = "openai/gpt-4o", value = 7),
-        app_commands.Choice(name = "openai/davinci-002", value = 8)
+        app_commands.Choice(name = "openai/davinci-002", value = 7)
     ])
     async def on_command(
         interaction: discord.Interaction,
